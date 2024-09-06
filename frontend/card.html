@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        .node {
+            stroke: #f3f4f6;
+        }
+        .link {
+            fill: none;
+            stroke: #1f2937;
+            marker-end: url(#arrow);
+        }
+        .node-text {
+            font-size: 14px;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            fill: white;
+        }
+        body {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+    </style>
+     <link rel="icon" href="{{ url_for('static', filename='img/ADA LOGO.png') }}" type="image/icon type">
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="flex flex-col items-center justify-start min-h-screen p-8">
+        <!-- User Info Card -->
+        <div class="bg-gray-300 p-6 rounded-lg shadow-lg w-full max-w-4xl flex mb-8">
+            <img src="https://via.placeholder.com/150" alt="User Photo" class="w-32 h-32 rounded-full mr-6 self-center" />
+            <div class="flex flex-col justify-center mx-8">
+                <h2 class="text-xl font-bold mb-2" id="user-name">{{ user_profile.username }}</h2>
+                <p class="text-lg mb-1" id="user-email">{{ user_profile.email }}</p>
+                <p class="text-lg">Current Role: {{ user_profile.current_role }}</p>
+                <p class="text-sm">Member since: {{ user_profile.created_at }}</p>
+                <p class="text-sm">Last login: {{ user_profile.last_login }}</p>
+            </div>
+        </div>
+
+        <!-- Career Path Visualization -->
+        <div class="bg-gray-200 p-6 rounded-lg shadow-lg w-full max-w-4xl flex flex-col" style="height: 33vh">
+            <h3 class="text-lg font-bold mb-4">Career Path</h3>
+            <div id="career-path-container" class="relative flex justify-center items-center h-full">
+                <!-- Career path will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-8 flex space-x-4">
+            <a href="/index" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Back to Index</a>
+            <a href="/question" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Upgrade Role</a>
+        </div>
+    </div>
+
+    <script>
+        // Data dari server yang dikirim dalam template
+        const userProfile = JSON.parse('{{ user_profile | tojson | safe }}');
+
+        // Proses data dari respons API
+        const roleHistory = userProfile.role_history;
+        const currentRole = userProfile.current_role;
+        const careerPath = roleHistory.map((history, index) => ({
+            id: index + 1,
+            role: history.role,
+            startDate: history.start_date,
+            endDate: history.end_date
+        }));
+
+        // Tambahkan entri untuk role saat ini
+        careerPath.push({
+            id: careerPath.length + 1,
+            role: currentRole,
+            startDate: roleHistory.length > 0 ? roleHistory[roleHistory.length - 1].end_date : userProfile.created_at,
+            endDate: "Present"
+        });
+
+        // Set up the SVG
+        const margin = { top: 20, right: 90, bottom: 30, left: 90 };
+        const width = 960 - margin.left - margin.right;
+        const height = 100 - margin.top - margin.bottom;
+
+        const svg = d3.select("#career-path-container")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Define arrow marker
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 10)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .style("fill", "#1F2937");
+
+        // Create nodes
+        const nodeWidth = 120;
+        const nodeHeight = 50;
+        const nodes = svg.selectAll(".node")
+            .data(careerPath)
+            .enter()
+            .append("g")
+            .attr("class", "node")
+            .attr("transform", (d, i) => `translate(${i * (nodeWidth + 50)}, ${height / 2 - nodeHeight / 2})`);
+
+        nodes.append("rect")
+            .attr("width", nodeWidth)
+            .attr("height", nodeHeight)
+            .attr("rx", 10)
+            .attr("ry", 10)
+            .attr("fill", "#374151");
+
+        nodes.append("text")
+            .attr("class", "node-text")
+            .attr("x", nodeWidth / 2)
+            .attr("y", nodeHeight / 2)
+            .text(d => d.role);
+
+        // Create links
+        svg.selectAll(".link")
+            .data(careerPath.slice(1))
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", (d, i) => {
+                const startX = i * (nodeWidth + 50) + nodeWidth;
+                const endX = (i + 1) * (nodeWidth + 50);
+                const startY = height / 2;
+                return `M${startX},${startY} L${endX},${startY}`;
+            });
+    </script>
+</body>
+</html>

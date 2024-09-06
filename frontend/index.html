@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADA.AI</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/styles.css') }}"
+  />
+  <script src="https://unpkg.com/feather-icons"></script>
+  <link rel="icon" href="{{ url_for('static', filename='img/ADA LOGO.png') }}" type="image/icon type">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: #f0f4f8;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .mic-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .mic-icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    .loading-spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid #3498db;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .wave-animation {
+      width: 100%;
+      height: 100px;
+      background: url("'{{ url_for('static', filename='img/waveform.png') }}'") no-repeat center center;
+      background-size: cover;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wave-animation::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      animation: wave 2s infinite;
+    }
+
+    @keyframes wave {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="loading" class="hidden">
+      <div class="loading-spinner"></div>
+      <p>Loading...</p>
+    </div>
+    
+    <div id="wave-container" class="wave-animation hidden"></div>
+    
+    <div id="mic-container" class="mic-container">
+      <button
+        id="record-btn"
+        class="bg-green-500 text-white rounded-full shadow-md hover:bg-green-600 transition-colors duration-200 ease-in-out"
+      >
+        <i data-feather="mic" class="mic-icon"></i>
+      </button>
+    </div>
+    
+    <div id="response" class="mt-4 text-lg text-gray-800">
+      <!-- Response text will appear here -->
+    </div>
+    
+    <audio id="audio-player" controls class="hidden mt-4">
+      <source id="audio-source" src="" type="audio/wav" />
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+
+  <script>
+    let isRecording = false;
+    let recorder;
+    let audioChunks = [];
+    let audioContext;
+    let workletNode;
+
+    // Define AudioWorkletProcessor code
+    const processorCode = `
+      class MyAudioProcessor extends AudioWorkletProcessor {
+        process(inputs, outputs, parameters) {
+          const input = inputs[0];
+          if (input.length > 0 && input[0].length > 0) {
+            const inputData = input[0];
+            const sum = inputData.reduce((a, b) => a + Math.abs(b), 0);
+            const volume = sum / inputData.length;
+            this.port.postMessage({ volume });
+          }
+          return true;
+        }
+      }
+
+      registerProcessor('my-worklet', MyAudioProcessor);
+    `;
+
+    // Create a new Blob with the processor code
+    const processorBlob = new Blob([processorCode], { type: 'application/javascript' });
+    const processorUrl = URL.createObjectURL(processorBlob);
+
+    const recordBtn = document.getElementById("record-btn");
+    const loading = document.getElementById("loading");
+    const waveContainer = document.getElementById("wave-container");
+    const response = document.getElementById("response");
+    const audioPlayer = document.getElementById("audio-player");
+    const audioSource = document.getElementById("audio-source");
+
+    recordBtn.addEventListener("click", () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    async function startRecording() {
+      audioChunks = [];
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Register the AudioWorkletProcessor
+        await audioContext.audioWorklet.addModule(processorUrl);
+
+        // Create an instance of AudioWorkletNode
+        workletNode = new AudioWorkletNode(audioContext, 'my-worklet');
+        
+        // Connect microphone to worklet node
+        const microphone = audioContext.createMediaStreamSource(stream);
+        microphone.connect(workletNode);
+        workletNode.connect(audioContext.destination);
+
+        workletNode.port.onmessage = (event) => {
+          const { volume } = event.data;
+          // Update wave animation based on volume
+          waveContainer.style.height = `${Math.max(50, volume * 2)}px`;
+        };
+
+        recorder = new MediaRecorder(stream);
+        recorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+        recorder.onstop = async () => {
+          const blob = new Blob(audioChunks, { type: "audio/wav" });
+          await uploadRecording(blob);
+        };
+        recorder.start();
+        isRecording = true;
+        recordBtn.innerHTML = '<i data-feather="stop-circle" class="mic-icon"></i>';
+        feather.replace();
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+      }
+    }
+
+    function stopRecording() {
+      if (recorder) {
+        recorder.stop();
+      }
+      if (audioContext) {
+        audioContext.close();
+      }
+      isRecording = false;
+      recordBtn.innerHTML = '<i data-feather="mic" class="mic-icon"></i>';
+      feather.replace();
+    }
+
+    async function uploadRecording(blob) {
+      const formData = new FormData();
+      formData.append('file', blob, 'recording.wav');
+      try {
+        loading.classList.remove('hidden');
+        const response = await fetch('/ask-ada', {
+          method: 'POST',
+          body: formData
+        });
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const result = await response.json();
+        displayResult(result);
+      } catch (error) {
+        console.error("Error uploading recording:", error);
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+
+    function displayResult(result) {
+      const { ada_response, audio_file_url } = result;
+      response.textContent = ada_response;
+      audioSource.src = audio_file_url;
+      audioPlayer.classList.remove('hidden');
+      audioPlayer.play();
+      waveContainer.classList.remove('hidden');
+    }
+
+    feather.replace();
+  </script>
+</body>
+</html>

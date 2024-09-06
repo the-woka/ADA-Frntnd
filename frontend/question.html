@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Question Page</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <style>
+        #loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+    </style>
+     <link rel="icon" href="{{ url_for('static', filename='img/ADA LOGO.png') }}" type="image/icon type">
+</head>
+<body class="bg-gray-100 text-gray-800 relative">
+    <div id="loading">Loading...</div>
+    <div class="container mx-auto py-10">
+        <h1 class="text-3xl font-bold text-center mb-6">Answer the Questions</h1>
+        <form id="quiz-form" class="space-y-8">
+            {% for question in questions %}
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-lg font-semibold mb-4">
+                        {{ question['number'] }}. {{ question['question'] }}
+                    </h2>
+                    <div class="space-y-2">
+                        {% for option in question['options'] %}
+                            <label class="block">
+                                <input type="radio" name="question{{ question['number'] }}" value="{{ option }}" class="mr-2" />
+                                {{ option }}
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </form>
+        <button id="submit-btn" class="bg-blue-500 text-white py-2 px-4 rounded mt-6">Submit</button>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+          const loading = document.getElementById('loading');
+          const form = document.getElementById('quiz-form');
+          
+          // Hide loading indicator
+          loading.style.display = 'none';
+      });
+
+      document.getElementById("submit-btn").addEventListener("click", function () {
+          const form = document.getElementById('quiz-form');
+          const formData = new FormData(form);
+          const answers = [];
+          formData.forEach((value, key) => {
+              answers.push(value);
+          });
+
+          // Correct answers are now passed from the backend
+          const correct_answers = JSON.parse('{{ correct_answers | tojson | safe }}');
+
+          fetch('/evaluate', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  answers: answers,
+                  correct_answers: correct_answers,
+                  new_role: "{{ new_role }}"
+              })
+          })
+          .then(response => response.json())
+          .then(data => {
+              const message = data.message;
+              alert(message);
+              if (data.new_role) {
+                  alert('Congratulations! You have been promoted to a! ' + data.new_role);
+                  window.location.href = `/info`;
+              }
+              else{
+                  window.location.href = `/index`;
+              }
+          })
+          .catch(error => console.error('Error:', error));
+      });
+    </script>
+</body>
+</html>

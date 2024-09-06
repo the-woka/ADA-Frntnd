@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/ADA LOGO.png') }}" type="image/icon type">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        #waveform {
+            position: relative;
+            height: 4px;
+            width: 100%;
+            background-color: #ddd;
+        }
+
+        #record-btn {
+            cursor: pointer;
+        }
+
+        #loading {
+            display: none;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="p-6">
+        <h1 class="text-2xl font-bold">{{ question_text }}</h1>
+        <audio id="audio-player" controls>
+            <source src="{{ audio_file }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
+        <div id="waveform" class="mt-4 bg-gray-200 h-4"></div>
+        <button id="record-btn" class="mt-4 bg-green-500 text-white rounded-full py-2 px-4 hover:bg-green-600">Record</button>
+        <div id="loading" class="hidden">Loading...</div>
+    </div>
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const waveform = document.getElementById('waveform');
+        const recordBtn = document.getElementById('record-btn');
+        const loading = document.getElementById('loading');
+        
+        let isRecording = false;
+        let recorder;
+        let audioChunks = [];
+        
+        // Animate waveform
+        audioPlayer.addEventListener('play', () => {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaElementSource(audioPlayer);
+            const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+            
+            source.connect(analyser);
+            analyser.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            scriptProcessor.onaudioprocess = () => {
+                analyser.getByteFrequencyData(dataArray);
+                const width = waveform.clientWidth;
+                waveform.innerHTML = dataArray.map(value => `<div style="width:${width / bufferLength}px;height:${value / 2}px;background-color:blue;display:inline-block;"></div>`).join('');
+            };
+        });
+        
+        // Start and stop recording
+        recordBtn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                recorder = new MediaRecorder(stream);
+                recorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                recorder.onstop = () => {
+                    const blob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const formData = new FormData();
+                    formData.append('audio', blob);
+
+                    fetch(`/api/v1/questions/answer/{{ user_id }}/{{ question_id }}`, {
+                        method: 'POST',
+                        body: formData
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.message === "User already has a role. No questions generated.") {
+                              window.location.href = "{{ url_for('index') }}";
+                          } else if (data.message === "Error contacting Flask API") {
+                              // Handle update role
+                              fetch(`/api/v1/questions/update_role/{{ user_id }}`, {
+                                  method: 'POST'
+                              }).then(response => response.json())
+                                .then(data => {
+                                    if (data.redirect) {
+                                        alert(data.popup_message);
+                                        window.location.href = data.redirect;
+                                    }
+                                });
+                          } else {
+                              // Reload question
+                              window.location.reload();
+                          }
+                      });
+                };
+                recorder.start();
+                isRecording = true;
+                recordBtn.textContent = 'Stop Recording';
+            });
+        }
+
+        function stopRecording() {
+            recorder.stop();
+            isRecording = false;
+            recordBtn.textContent = 'Start Recording';
+        }
+    </script>
+</body>
+</html>

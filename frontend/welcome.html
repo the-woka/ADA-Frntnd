@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome Page</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        background-color: #f3f4f6; /* Light background */
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .welcome-container {
+        text-align: center;
+      }
+
+      .welcome-heading {
+        color: #1f2937; /* Dark text color */
+      }
+
+      .subheading {
+        color: #6b7280; /* Lighter gray subheading */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="welcome-container">
+      <!-- Welcome Message -->
+      <h1 class="welcome-heading text-5xl font-bold mb-4">Welcome</h1>
+      <h2 class="subheading text-2xl font-medium mb-4">To ADA</h2>
+      <p class="text-gray-500 text-lg mb-8">
+        Join our community and explore the endless possibilities with us.
+        Whether you're here to learn or grow, we have something for everyone.
+      </p>
+      <!-- Learn More Button -->
+      <a
+        href="/login"
+        class="learn-more-btn py-3 px-6 rounded-full text-white bg-indigo-600 hover:bg-indigo-700 inline-block"
+        >Learn More</a
+      >
+    </div>
+  </body>
+</html>

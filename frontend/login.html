@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login & Register</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+        rel="stylesheet"
+    />
+    <style>
+        body {
+            margin: 0;
+            background-image: url("frontend/img/bg.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+
+        .input-field {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+    </style>
+     <link rel="icon" href="{{ url_for('static', filename='img/ADA LOGO.png') }}" type="image/icon type">
+</head>
+<body class="h-screen">
+    <div class="w-1/2 background-section flex justify-center items-center"></div>
+
+    <div class="w-full md:w-1/2 h-screen flex justify-center items-center bg-white">
+        <div class="form-container w-full max-w-md">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Login</h2>
+            <p class="text-gray-500 mb-4">Welcome back! Please login to your account.</p>
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-4" method="post" action="/login">
+                <div>
+                    <label for="email-login" class="block text-sm text-gray-600">Email</label>
+                    <input
+                        id="email-login"
+                        name="email"
+                        type="email"
+                        required
+                        class="input-field w-full px-3 py-2 rounded-md border-0"
+                    />
+                </div>
+                <div>
+                    <label for="password-login" class="block text-sm text-gray-600">Password</label>
+                    <input
+                        id="password-login"
+                        name="password"
+                        type="password"
+                        required
+                        class="input-field w-full px-3 py-2 rounded-md border-0"
+                    />
+                </div>
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input
+                            id="remember-me"
+                            name="remember-me"
+                            type="checkbox"
+                            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        />
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-600">
+                            Remember Me
+                        </label>
+                    </div>
+                    <div class="text-sm">
+                        <a
+                            href="#"
+                            class="font-medium text-indigo-600 hover:text-indigo-500"
+                        >
+                            Forgot your password?
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <button
+                        type="submit"
+                        class="w-full py-2 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                    >
+                        Login
+                    </button>
+                </div>
+            </form>
+
+            <p class="text-sm text-gray-600 mt-4">
+                New User?
+                <a
+                    href="/register"
+                    id="register-tab"
+                    class="font-medium text-indigo-600 hover:text-indigo-500"
+                >Signup</a>
+            </p>
+        </div>
+    </div>
+    <script>
+      document.getElementById('login-form').addEventListener('submit', function (event) {
+          event.preventDefault(); // Prevent the form from submitting in the default way
+
+          // Get the form values
+          const email = document.getElementById('email-login').value;
+          const password = document.getElementById('password-login').value;
+
+          // Create the user object
+          const userData = {
+              email: email,
+              password: password,
+          };
+
+          // Send the data as JSON to the backend
+          fetch('/login', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(userData),
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.error) {
+                  alert('Login failed: ' + data.error);
+              } else if (data.success) {
+                  window.location.href = data.redirect;
+              }
+          })
+          .catch(error => console.error('Error:', error));
+      });
+
+    </script>
+</body>
+</html>

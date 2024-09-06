@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        background-image: url("frontend/img/bg.jpg"); /* Replace with actual image path */
+        background-size: cover;
+        background-position: center;
+      }
+
+      .input-field {
+        background-color: #f3f4f6; /* Light input field background */
+        color: #1f2937; /* Text color for input */
+      }
+
+      .form-container {
+        padding: 40px;
+      }
+    </style>
+  </head>
+  <body class="h-screen">
+    <!-- Split screen layout -->
+    <div
+      class="w-1/2 background-section flex justify-center items-center"
+    ></div>
+
+    <div
+      class="w-full md:w-1/2 h-screen flex justify-center items-center bg-white"
+    >
+      <div class="form-container w-full max-w-md">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Register</h2>
+        <p class="text-gray-500 mb-4">
+          Fill in the details to create your account.
+        </p>
+        <!-- Register Form -->
+        <form
+          id="register-form"
+          class="space-y-4"
+          method="POST"
+          action="/api/v1/users/register"
+        >
+          <div>
+            <label for="username-register" class="block text-sm text-gray-600"
+              >Username</label
+            >
+            <input
+              id="username-register"
+              name="username"
+              type="text"
+              required
+              class="input-field w-full px-3 py-2 rounded-md border-0"
+            />
+          </div>
+          <div>
+            <label for="email-register" class="block text-sm text-gray-600"
+              >Email</label
+            >
+            <input
+              id="email-register"
+              name="email"
+              type="email"
+              required
+              class="input-field w-full px-3 py-2 rounded-md border-0"
+            />
+          </div>
+          <div>
+            <label for="password-register" class="block text-sm text-gray-600"
+              >Password</label
+            >
+            <input
+              id="password-register"
+              name="password"
+              type="password"
+              required
+              class="input-field w-full px-3 py-2 rounded-md border-0"
+            />
+          </div>
+          <div>
+            <label
+              for="confirm-password-register"
+              class="block text-sm text-gray-600"
+              >Confirm Password</label
+            >
+            <input
+              id="confirm-password-register"
+              name="confirm-password"
+              type="password"
+              required
+              class="input-field w-full px-3 py-2 rounded-md border-0"
+            />
+          </div>
+          <div>
+            <button
+              type="submit"
+              class="w-full py-2 px-4 rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+            >
+              Register
+            </button>
+          </div>
+        </form>
+
+        <p class="text-sm text-gray-600 mt-4">
+          Already have an account?
+          <a
+            href="/login"
+            class="font-medium text-indigo-600 hover:text-indigo-500"
+            >Login</a
+          >
+        </p>
+      </div>
+    </div>
+  </body>
+  <script>
+    document
+      .getElementById("register-form")
+      .addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent the form from submitting in the default way
+
+        // Get the form values
+        const username = document.getElementById("username-register").value;
+        const email = document.getElementById("email-register").value;
+        const password = document.getElementById("password-register").value;
+        const confirmPassword = document.getElementById(
+          "confirm-password-register"
+        ).value;
+
+        if (password !== confirmPassword) {
+          alert("Passwords do not match!");
+          return;
+        }
+
+        // Create the user object
+        const userData = {
+          username: username,
+          email: email,
+          password: password, // Ideally, password would be hashed before sending
+        };
+
+        // Send the data as JSON to the backend
+        fetch("/api/v1/users/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(userData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              alert("Registration failed: " + data.error);
+            } else {
+              alert("Registration successful!");
+              // Redirect to login or another page
+              window.location.href = "/login";
+            }
+          })
+          .catch((error) => console.error("Error:", error));
+      });
+  </script>
+</html>

@@ -1,0 +1,174 @@
+#sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  z-index: 100; /* Ensure the sidebar is on top */
+}
+
+#sidebar.visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.hover-area {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: pointer;
+  z-index: 50; /* Ensure hover area is on top */
+}
+
+/* Center the main content (the microphone icon) */
+.center-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+}
+
+/* Profile picture dropdown styles */
+.dropdown-menu {
+  position: absolute;
+  right: 0;
+  margin-top: 8px;
+  width: 150px;
+  background-color: white;
+  border-radius: 8px; /* Fixed border-radius */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.dropdown-menu a {
+  display: block;
+  padding: 10px 15px;
+  color: #333;
+  text-decoration: none;
+  border-radius: 8px; /* Match border-radius */
+}
+
+.dropdown-menu a:hover {
+  background-color: #f0f0f0;
+}
+
+/* Style for the microphone icon */
+.mic-icon {
+  width: 36px;
+  height: 36px;
+}
+
+#record-btn {
+  width: 80px; /* Initial size */
+  height: 80px; /* Initial size */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Login.html */
+
+/* General styles for the page */
+body {
+  background-color: #1a202c;
+  color: #edf2f7;
+  font-family: "Arial", sans-serif;
+}
+
+/* Center the main container */
+.bg-gray-800 {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Styles for the title buttons (Login and Register) */
+.title-btn {
+  flex: 1;
+  padding: 10px 0;
+  cursor: pointer;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #bbb;
+  border-bottom: 2px solid transparent;
+  transition: color 0.3s, border-color 0.3s;
+  background-color: #2d3748;
+  border-radius: 0.375rem 0.375rem 0 0; /* Rounded corners on the top */
+}
+
+.title-btn.active {
+  color: #fff;
+  background-color: #4299e1;
+  border-bottom: none;
+}
+
+/* Ensure the buttons are next to each other */
+.title-btn-container {
+  display: flex;
+  border-radius: 0.375rem;
+  overflow: hidden; /* Prevents the border radius from being overridden */
+}
+
+/* Hidden class to toggle forms */
+.hidden {
+  display: none;
+}
+
+/* Form input styles */
+input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  background-color: #2d3748;
+  border: none;
+  border-radius: 0.375rem;
+  color: #edf2f7;
+}
+
+/* Form button styles */
+button {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #4299e1;
+  border: none;
+  border-radius: 0.375rem;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+#upload-btn {
+  background-color: transparent;
+  padding: 0;
+}
+
+#upload-btn:hover {
+  background-color: #374151;
+}
+
+button:hover {
+  background-color: #3182ce;
+}
+
+/* Link styles */
+a {
+  color: #63b3ed;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Style for the forms */
+form {
+  display: flex;
+  flex-direction: column;
+}
